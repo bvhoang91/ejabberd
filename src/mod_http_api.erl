@@ -113,6 +113,8 @@
 -define(HEADER(CType),
         [CType, ?AC_ALLOW_ORIGIN, ?AC_ALLOW_HEADERS]).
 
+-record(command_info, {name :: atom(),
+		       args_extra = [] :: list()}).  
 %% -------------------
 %% Module control
 %% -------------------
@@ -204,16 +206,92 @@ oauth_check_token(ScopeList, Token) when is_list(ScopeList) ->
 %% ------------------
 %% command processing
 %% ------------------
+%%%--------------------------------------------------------------------------%%%
+%%%Conversation
+convert_app_command([<<"conversations">>], #request{method = 'POST'}) ->
+    #command_info{name = app_conv_create};
+convert_app_command([<<"conversations">>, ConvID, <<"mark_as_read">>],
+		    #request{method = 'POST'}) ->
+    #command_info{name = app_conv_makeasread, args_extra = [{convID, ConvID}]};
+convert_app_command([<<"conversations">>, ConvID], #request{method = 'GET'}) ->
+    #command_info{name = app_conv_retrieve, args_extra = [{convID, ConvID}]};
+convert_app_command([<<"conversations">>, ConvID], #request{method = 'DELETE'}) ->
+    #command_info{name = app_conv_delete, args_extra = [{convID, ConvID}]};
+convert_app_command([<<"conversations">>, ConvID], #request{method = 'PATCH'}) ->
+    #command_info{name = app_conv_update, args_extra = [{convID, ConvID}]};
+%%%Messages
+convert_app_command([<<"conversations">>, ConvID, <<"messages">>],
+		    #request{method = 'POST'}) ->
+    #command_info{name = app_msg_send, args_extra = [{convID, ConvID}]};
+convert_app_command([<<"conversations">>, ConvID, <<"messages">>],
+		    #request{method = 'GET'}) ->
+    #command_info{name = app_msg_retrieve, args_extra = [{convID, ConvID}]};
+convert_app_command([<<"conversations">>, ConvID, <<"messages">>, MsgID],
+		    #request{method = 'GET'}) ->
+    #command_info{name = app_msg_retrieve, args_extra = [{convID, ConvID},
+							 {msgID, MsgID}]};
+convert_app_command([<<"conversations">>, ConvID, <<"messages">>, MsgID],
+		    #request{method = 'DELETE'}) ->
+    #command_info{name = app_msg_delete, args_extra = [{convID, ConvID},
+							{msgID, MsgID}]};
+%%%Rich content
+convert_app_command([<<"conversations">>, ConvID, <<"content">>],
+		    #request{method = 'POST'}) ->
+    #command_info{name = app_richcontent_request,
+		  args_extra = [{convID, ConvID}]};
+convert_app_command([<<"conversations">>, ConvID, <<"content">>, ContentID],
+		    #request{method = 'GET'}) ->
+    #command_info{name = app_richcontent_refresh,
+		  args_extra = [{convID, ConvID},
+				{contentID, ContentID}]};
+%%%Announcements
+convert_app_command([<<"announcements">>], #request{method = 'POST'}) ->
+    #command_info{name = app_announcements_send};
+%%%Notifications
+convert_app_command([<<"notifications">>], #request{method = 'POST'}) ->
+    #command_info{name = app_notifications_send};
+%%%Export
+convert_app_command([<<"exports">>, <<"security">>],
+		    #request{method = 'PUT'}) ->
+    #command_info{name = app_export_register_key};
+convert_app_command([<<"export">>, <<"security">>],
+		    #request{method = 'GET'}) ->
+    #command_info{name = app_export_get_key};
+convert_app_command([<<"exports">>],
+		    #request{method = 'POST'}) ->
+    #command_info{name = app_export_init};
+convert_app_command([<<"exports">>, ExportID, <<"status">>],
+		    #request{method = 'GET'}) ->
+    #command_info{name = app_export_retrieve_status,
+		  args_extra = [{exportID = ExportID}]};
+convert_app_command([<<"exports">>, <<"schedule">>],
+		    #request{method = 'PUT'}) ->
+    #command_info{name = app_export_schedule};
+convert_app_command([<<"exports">>, <<"schedule">>],
+		    #request{method = 'GET'}) ->
+    #command_info{name = app_export_retrieves_schedule};
+convert_app_command([<<"exports">>],
+		    #request{method = 'GET'}) ->
+    #command_info{name = app_export_retrieve};
+convert_app_command([<<"exports">>, ExportID],
+		    #request{method = 'DELETE'}) ->
+    #command_info{name = app_export_delete,
+		  args_extra = [{exportID, ExportID}]};
+
+convert_app_command(_, _) -> ok.
+%%%--------------------------------------------------------------------------%%%
 
 %process(Call, Request) ->
-%    ?DEBUG("~p~n~p", [Call, Request]), ok;
+%    ?DEBUG("~p~n~p~nInfo:~p", [Call, Request, Info]), badrequest_response();
 process(_, #request{method = 'POST', data = <<>>}) ->
     ?DEBUG("Bad Request: no data", []),
     badrequest_response(<<"Missing POST data">>);
-process([Call], #request{method = 'POST', data = Data, ip = {IP, _} = IPPort} = Req) ->
+process(Calls, #request{method = 'POST', data = Data, ip = {IP, _} = IPPort} = Req) ->
     Version = get_api_version(Req),
     try
         Args = extract_args(Data),
+	Info = convert_app_command(Calls, Request),
+	Call = Info#command_info.name,
         log(Call, Args, IPPort),
         case check_permissions(Req, Call) of
             {allowed, Cmd, Auth} ->
@@ -234,13 +312,15 @@ process([Call], #request{method = 'POST', data = Data, ip = {IP, _} = IPPort} = 
             ?DEBUG("Bad Request: ~p ~p", [_Error, erlang:get_stacktrace()]),
             badrequest_response()
     end;
-process([Call], #request{method = 'GET', q = Data, ip = IP} = Req) ->
+process(Calls, #request{method = 'GET', q = Data, ip = IP} = Req) ->
     Version = get_api_version(Req),
     try
         Args = case Data of
                    [{nokey, <<>>}] -> [];
                    _ -> Data
                end,
+	Info = convert_app_command(Calls, Request),
+	Call = Info#command_info.name,
         log(Call, Args, IP),
         case check_permissions(Req, Call) of
             {allowed, Cmd, Auth} ->
