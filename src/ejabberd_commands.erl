@@ -528,7 +528,7 @@ execute_command(AccessCommands1, Auth1, Name, Arguments, Version, CallerInfo) ->
     TokenJID = oauth_token_user(Auth1),
     Command = get_command_definition(Name, Version),
     AccessCommands = get_all_access_commands(AccessCommands1),
-
+?DEBUG("Token:~p, Cmd:~p, Access:~p", [TokenJID, Command, AccessCommands]),
     case check_access_commands(AccessCommands, Auth, Name, Command, Arguments, CallerInfo) of
         ok -> execute_check_policy(Auth, TokenJID, Command, Arguments)
     end.
