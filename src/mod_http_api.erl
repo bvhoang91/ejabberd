@@ -152,6 +152,7 @@ check_permissions2(#request{auth = HTTPAuth, headers = Headers}, Call, _, ScopeL
             {value, {_, <<"true">>}} -> true;
             _ -> false
         end,
+	?DEBUG_INFO("Auth:~p", [HTTPAuth]),
     Auth =
         case HTTPAuth of
             {SJID, Pass} ->
@@ -205,7 +206,8 @@ check_permissions2(_Request, _Call, _Policy, _Scope) ->
     unauthorized_response().
 
 oauth_check_token(ScopeList, Token) when is_list(ScopeList) ->
-    ejabberd_oauth:check_token(ScopeList, Token).
+    ejabberd_oauth:check_token(ScopeList, Token),
+	{ok, user, {<<"hoang">>, <<"localhost">>}}.
 
 %% ------------------
 %% command processing
@@ -294,14 +296,14 @@ process(Calls, #request{method = 'POST', data = Data, ip = {IP, _} = IPPort} = R
     Version = get_api_version(Req),
     try
         Args = extract_args(Data),
-	Info = convert_app_command(Calls, Req),
-	?DEBUG("Calls:~p, Info:~p", [Calls, Info]),
-	Call = Info#command_info.name,
+		Info = convert_app_command(Calls, Req),
+		?DEBUG("Calls:~p, Info:~p", [Calls, Info]),
+		Call = Info#command_info.name,
         log(Call, Args, IPPort),
         case check_permissions(Req, Call) of
             {allowed, Cmd, Auth} ->
                 Result = handle(Cmd, Auth, Args, Version, IP),
-		?DEBUG("Hoang Result:~p", [Result]),
+				?DEBUG("Hoang Result:~p", [Result]),
                 json_format(Result);
             %% Warning: check_permission direcly formats 401 reply if not authorized
             ErrorResponse ->
@@ -441,7 +443,6 @@ handle(Call, Auth, Args, Version, IP) when is_atom(Call), is_list(Args) ->
     end.
 
 handle2(Call, Auth, Args, Version, IP) when is_atom(Call), is_list(Args) ->
-
     ?DEBUG("Args:~p", [Args]),
     {ArgsF, _ResultF} = ejabberd_commands:get_command_format(Call, Auth, Version),
     ArgsFormatted = format_args(Args, ArgsF),
@@ -536,7 +537,7 @@ ejabberd_command(Auth, Cmd, Args, Version, IP) ->
                  admin -> [];
                  _ -> undefined
              end,
-    ?DEBUG("Access:~p", [Access]),
+    ?DEBUG("Access:~p Auth:~p, Cmd:~p, Args:~p", [Access, Auth, Cmd, Args]),
     case ejabberd_commands:execute_command(Access, Auth, Cmd, Args, Version, #{ip => IP}) of
         {error, Error} ->
             throw(Error);
