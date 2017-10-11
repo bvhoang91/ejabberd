@@ -113,8 +113,8 @@
 -define(HEADER(CType),
         [CType, ?AC_ALLOW_ORIGIN, ?AC_ALLOW_HEADERS]).
 
--record(command_info, {name :: atom(),
-		       args_extra = [] :: list()}).  
+-record(command_info, { name :: atom(),
+		       			args_extra = [] :: list()}).  
 %% -------------------
 %% Module control
 %% -------------------
@@ -145,7 +145,7 @@ check_permissions(Request, Command) ->
         _ ->
             json_error(404, 40, <<"Endpoint not found.">>)
     end.
-
+%% TO DO, check authen for clent and app
 check_permissions2(#request{auth = HTTPAuth, headers = Headers}, Call, _, ScopeList)
   when HTTPAuth /= undefined ->
     Admin =
@@ -214,77 +214,79 @@ oauth_check_token(ScopeList, Token) when is_list(ScopeList) ->
 %% command processing
 %% ------------------
 %%%--------------------------------------------------------------------------%%%
+convert_api_command(Calls, Req) ->
+	convert_command(Calls, Req).
 %%%Conversation
-convert_app_command([<<"conversations">>], #request{method = 'POST'}) ->
+convert_command([<<"conversations">>], #request{method = 'POST'}) ->
     #command_info{name = app_conv_create};
-convert_app_command([<<"conversations">>, ConvID, <<"mark_as_read">>],
+convert_command([<<"conversations">>, ConvID, <<"mark_as_read">>],
 		    #request{method = 'POST'}) ->
     #command_info{name = app_conv_makeasread, args_extra = [{convID, ConvID}]};
-convert_app_command([<<"conversations">>, ConvID], #request{method = 'GET'}) ->
+convert_command([<<"conversations">>, ConvID], #request{method = 'GET'}) ->
     #command_info{name = app_conv_retrieve, args_extra = [{convID, ConvID}]};
-convert_app_command([<<"conversations">>, ConvID], #request{method = 'DELETE'}) ->
+convert_command([<<"conversations">>, ConvID], #request{method = 'DELETE'}) ->
     #command_info{name = app_conv_delete, args_extra = [{convID, ConvID}]};
-convert_app_command([<<"conversations">>, ConvID], #request{method = 'PATCH'}) ->
+convert_command([<<"conversations">>, ConvID], #request{method = 'PATCH'}) ->
     #command_info{name = app_conv_update, args_extra = [{convID, ConvID}]};
 %%%Messages
-convert_app_command([<<"conversations">>, ConvID, <<"messages">>],
+convert_command([<<"conversations">>, ConvID, <<"messages">>],
 		    #request{method = 'POST'}) ->
     #command_info{name = app_msg_send, args_extra = [{convID, ConvID}]};
-convert_app_command([<<"conversations">>, ConvID, <<"messages">>],
+convert_command([<<"conversations">>, ConvID, <<"messages">>],
 		    #request{method = 'GET'}) ->
     #command_info{name = app_msg_retrieve, args_extra = [{convID, ConvID}]};
-convert_app_command([<<"conversations">>, ConvID, <<"messages">>, MsgID],
+convert_command([<<"conversations">>, ConvID, <<"messages">>, MsgID],
 		    #request{method = 'GET'}) ->
     #command_info{name = app_msg_retrieve, args_extra = [{convID, ConvID},
 							 {msgID, MsgID}]};
-convert_app_command([<<"conversations">>, ConvID, <<"messages">>, MsgID],
+convert_command([<<"conversations">>, ConvID, <<"messages">>, MsgID],
 		    #request{method = 'DELETE'}) ->
     #command_info{name = app_msg_delete, args_extra = [{convID, ConvID},
 							{msgID, MsgID}]};
 %%%Rich content
-convert_app_command([<<"conversations">>, ConvID, <<"content">>],
+convert_command([<<"conversations">>, ConvID, <<"content">>],
 		    #request{method = 'POST'}) ->
     #command_info{name = app_richcontent_request,
 		  args_extra = [{convID, ConvID}]};
-convert_app_command([<<"conversations">>, ConvID, <<"content">>, ContentID],
+convert_command([<<"conversations">>, ConvID, <<"content">>, ContentID],
 		    #request{method = 'GET'}) ->
     #command_info{name = app_richcontent_refresh,
 		  args_extra = [{convID, ConvID},
 				{contentID, ContentID}]};
 %%%Announcements
-convert_app_command([<<"announcements">>], #request{method = 'POST'}) ->
+convert_command([<<"announcements">>], #request{method = 'POST'}) ->
     #command_info{name = app_announcements_send};
 %%%Notifications
-convert_app_command([<<"notifications">>], #request{method = 'POST'}) ->
+convert_command([<<"notifications">>], #request{method = 'POST'}) ->
     #command_info{name = app_notifications_send};
 %%%Export
-convert_app_command([<<"exports">>, <<"security">>],
+convert_command([<<"exports">>, <<"security">>],
 		    #request{method = 'PUT'}) ->
     #command_info{name = app_export_register_key};
-convert_app_command([<<"export">>, <<"security">>],
+convert_command([<<"export">>, <<"security">>],
 		    #request{method = 'GET'}) ->
     #command_info{name = app_export_get_key};
-convert_app_command([<<"exports">>],
+convert_command([<<"exports">>],
 		    #request{method = 'POST'}) ->
     #command_info{name = app_export_init};
-convert_app_command([<<"exports">>, ExportID, <<"status">>],
+convert_command([<<"exports">>, ExportID, <<"status">>],
 		    #request{method = 'GET'}) ->
     #command_info{name = app_export_retrieve_status,
 		  args_extra = [{exportID = ExportID}]};
-convert_app_command([<<"exports">>, <<"schedule">>],
+convert_command([<<"exports">>, <<"schedule">>],
 		    #request{method = 'PUT'}) ->
     #command_info{name = app_export_schedule};
-convert_app_command([<<"exports">>, <<"schedule">>],
+convert_command([<<"exports">>, <<"schedule">>],
 		    #request{method = 'GET'}) ->
     #command_info{name = app_export_retrieves_schedule};
-convert_app_command([<<"exports">>],
+convert_command([<<"exports">>],
 		    #request{method = 'GET'}) ->
     #command_info{name = app_export_retrieve};
-convert_app_command([<<"exports">>, ExportID],
+convert_command([<<"exports">>, ExportID],
 		    #request{method = 'DELETE'}) ->
     #command_info{name = app_export_delete,
 		  args_extra = [{exportID, ExportID}]};
-convert_app_command([Call], _) -> 
+convert_command([Call], _) -> 
     #command_info{name = Call}.
 %%%--------------------------------------------------------------------------%%%
 
@@ -297,7 +299,7 @@ process(Calls, #request{method = 'POST', data = Data, ip = {IP, _} = IPPort} = R
     Version = get_api_version(Req),
     try
         Args = extract_args(Data),
-		Info = convert_app_command(Calls, Req),
+		Info = convert_api_command(Calls, Req),
 		?DEBUG("Calls:~p, Info:~p", [Calls, Info]),
 		Call = Info#command_info.name,
         log(Call, Args, IPPort),
@@ -330,7 +332,7 @@ process(Calls, #request{method = 'GET', q = Data, ip = IP} = Req) ->
                    [{nokey, <<>>}] -> [];
                    _ -> Data
                end,
-	Info = convert_app_command(Calls, Req),
+	Info = convert_api_command(Calls, Req),
 	Call = Info#command_info.name,
         log(Call, Args, IP),
         case check_permissions(Req, Call) of
@@ -517,6 +519,8 @@ format_arg(Arg, binary) when is_list(Arg) -> process_unicode_codepoints(Arg);
 format_arg(Arg, binary) when is_binary(Arg) -> Arg;
 format_arg(Arg, string) when is_list(Arg) -> process_unicode_codepoints(Arg);
 format_arg(Arg, string) when is_binary(Arg) -> Arg;
+format_arg(<<"true">>, bool) -> true;
+format_arg(<<"false">>, bool) -> false;
 format_arg(undefined, binary) -> <<>>;
 format_arg(undefined, string) -> <<>>;
 format_arg(Arg, Format) ->
@@ -551,27 +555,28 @@ ejabberd_command(Auth, Cmd, Args, Version, IP) ->
             format_command_result(Cmd, Auth, Res, Version)
     end.
 
-format_command_result(Cmd, Auth, Result, Version) ->
-    {_, ResultFormat} = ejabberd_commands:get_command_format(Cmd, Auth, Version),
+format_command_result(Cmd, Auth, {Code, VerResult, Result}, Version) ->
+    {_, ResultFormats} = ejabberd_commands:get_command_format(Cmd, Auth, Version),
+	ResultFormat = proplists:get_value(VerResult, ResultFormats),
     case {ResultFormat, Result} of
         {{_, rescode}, V} when V == true; V == ok ->
-            {200, 0};
+            {Code, 0};
         {{_, rescode}, _} ->
-            {200, 1};
+            {Code, 1};
         {_, {error, ErrorAtom, Code, Msg}} ->
             format_error_result(ErrorAtom, Code, Msg);
         {{_, restuple}, {V, Text}} when V == true; V == ok ->
-            {200, iolist_to_binary(Text)};
+            {Code, iolist_to_binary(Text)};
         {{_, restuple}, {ErrorAtom, Msg}} ->
             format_error_result(ErrorAtom, 0, Msg);
         {{_, {list, _}}, _V} ->
             {_, L} = format_result(Result, ResultFormat),
-            {200, L};
+            {Code, L};
         {{_, {tuple, _}}, _V} ->
             {_, T} = format_result(Result, ResultFormat),
-            {200, T};
+            {Code, T};
         _ ->
-            {200, {[format_result(Result, ResultFormat)]}}
+            {Code, {[format_result(Result, ResultFormat)]}}
     end.
 
 format_result(Atom, {Name, atom}) ->

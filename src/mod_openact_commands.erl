@@ -10,6 +10,18 @@
 
 -export([app_conv_create/3]).
 
+-define(RES_CONV, {tuple, [{id, string}, {url, string}, {messages_url, string},
+						   {created_at, string},
+						   {participants, {list, 
+										   {data, {tuple, [{id, string}, 
+														   {url, string},
+														   {user_id, string},
+														   {display_name, string},
+														   {avatar_url, string}]}}}},
+						   {distinct, string},
+						   {metadata, {tuple, [{title, string}, {favorite, string},
+											   {background_color, string},{likes, string},
+											   {likers, {list, {data, string}}}]}}]}).
 
 start(_Host, _Opts) ->
     ?DEBUG("Hoang --- Start", []),
@@ -25,16 +37,23 @@ get_commands_spec() ->
      [#ejabberd_commands{name = app_conv_create, tags = [erlang],
 			desc = "Recompile and reload Erlang source code file",
 			module = ?MODULE, function = app_conv_create,
-			args = [{app_id, string}, {abc, string}, {a, string}],
+			args = [{app_id, binary}, {participants, {list, {name, binary}}},
+					{distinct, bool}, {metadata, {list, {name, binary}}}],
 			args_example = [],
 			args_desc = [],
-			result = {res, rescode},
+			result = [{v1, {response, ?RES_CONV}},
+					  {v2, {response, {tuple, [{id, string}, {code, string},
+											   {message, string}, {url, string},
+											   {data, ?RES_CONV}]}}],
 			result_example = ok,
 			policy = open,
 			result_desc = "Status code: 0 on success, 1 otherwise"}].
 
-app_conv_create(AppID, Abc, A) ->
-    ?DEBUG("Hoang AppID:~p ABC:~p A:~p", [AppID, Abc, A]),
-    {ok, 0}.
+app_conv_create(AppID, Participants, Distinct, Metadata) ->
+	Res1 = {<<"id">>, <<"url">>, <<"msg_url">>, <<"time">>, [{<<"idp">>, <<"urlp">>, <<"a">>, <<"b">>, <<"c">>}],
+		    <<"true">>, {<<"title">>, <<"fav">>, <<"color">>, <<"likes">>, [<<"likers">>]}},
+	Res2 = {<<"id">>, <<"code">>, <<"msg">>, "url", Res1},
+    ?DEBUG("Hoang AppID:~p Participants:~p, Distinct:~p, Metadata:~p", [AppID, Participants, Distinct, Metadata]),
+    {200, v1, Res1}.
 
 mod_opt_type(_) -> [].
