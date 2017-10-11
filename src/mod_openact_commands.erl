@@ -8,7 +8,7 @@
 
 -export([start/2, stop/1, mod_opt_type/1, depends/2]).
 
--export([app_conv_create/1]).
+-export([app_conv_create/3]).
 
 
 start(_Host, _Opts) ->
@@ -25,7 +25,7 @@ get_commands_spec() ->
      [#ejabberd_commands{name = app_conv_create, tags = [erlang],
 			desc = "Recompile and reload Erlang source code file",
 			module = ?MODULE, function = app_conv_create,
-			args = [{abc, string}],
+			args = [{app_id, string}, {abc, string}, {a, string}],
 			args_example = [],
 			args_desc = [],
 			result = {res, rescode},
@@ -33,8 +33,8 @@ get_commands_spec() ->
 			policy = open,
 			result_desc = "Status code: 0 on success, 1 otherwise"}].
 
-app_conv_create(Abc) ->
-    ?DEBUG("Hoang ABC:~p", [Abc]),
+app_conv_create(AppID, Abc, A) ->
+    ?DEBUG("Hoang AppID:~p ABC:~p A:~p", [AppID, Abc, A]),
     {ok, 0}.
 
 mod_opt_type(_) -> [].

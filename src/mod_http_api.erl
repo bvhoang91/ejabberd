@@ -134,12 +134,13 @@ depends(_Host, _Opts) ->
 check_permissions(Request, Command) when is_atom(Command) ->
     {ok, CommandPolicy, Scope} =
 	ejabberd_commands:get_command_policy_and_scope(Command),
-    ?DEBUG("Hoang CommandPolicy:~p, Scope:~p", [CommandPolicy, Scope]),
+    ?INFO_MSG("Hoang CommandPolicy:~p, Scope:~p", [CommandPolicy, Scope]),
     check_permissions2(Request, Command, CommandPolicy, Scope);
 check_permissions(Request, Command) ->
     case catch binary_to_existing_atom(Command, utf8) of
         Call when is_atom(Call) ->
             {ok, CommandPolicy, Scope} = ejabberd_commands:get_command_policy_and_scope(Call),
+	    ?INFO_MSG("Hoang CommandPolicy:~p, Scope:~p", [CommandPolicy, Scope]),
             check_permissions2(Request, Call, CommandPolicy, Scope);
         _ ->
             json_error(404, 40, <<"Endpoint not found.">>)
@@ -152,7 +153,7 @@ check_permissions2(#request{auth = HTTPAuth, headers = Headers}, Call, _, ScopeL
             {value, {_, <<"true">>}} -> true;
             _ -> false
         end,
-	?DEBUG_INFO("Auth:~p", [HTTPAuth]),
+	?INFO_MSG("Auth:~p", [HTTPAuth]),
     Auth =
         case HTTPAuth of
             {SJID, Pass} ->
@@ -283,8 +284,8 @@ convert_app_command([<<"exports">>, ExportID],
 		    #request{method = 'DELETE'}) ->
     #command_info{name = app_export_delete,
 		  args_extra = [{exportID, ExportID}]};
-
-convert_app_command(_, _) -> ok.
+convert_app_command([Call], _) -> 
+    #command_info{name = Call}.
 %%%--------------------------------------------------------------------------%%%
 
 %process(Call, Request) ->
@@ -389,8 +390,8 @@ get_api_version([]) ->
 handle(Call, Auth, Args, Version, IP) when is_atom(Call), is_list(Args) ->
     case ejabberd_commands:get_command_format(Call, Auth, Version) of
         {ArgsSpec, _} when is_list(ArgsSpec) ->
-            Args2 = [{jlib:binary_to_atom(Key), Value} || {Key, Value} <- Args],
-            Spec = lists:foldr(
+            Args2 = [{app_id, <<"AppID123">>}] ++ [{jlib:binary_to_atom(Key), Value} || {Key, Value} <- Args],
+            Spec =  lists:foldr(
                     fun ({Key, binary}, Acc) ->
                             [{Key, <<>>}|Acc];
                         ({Key, string}, Acc) ->
@@ -403,6 +404,8 @@ handle(Call, Auth, Args, Version, IP) when is_atom(Call), is_list(Args) ->
                             [{Key, undefined}|Acc]
                     end, [], ArgsSpec),
 	    try
+		?INFO_MSG("Args2:~p, Spec:~p", [Args2, Spec]),
+%%Args2:[{abc,<<"peter">>},{a,<<"123">>}], Spec:[{abc,<<>>},{a,<<>>}]
           handle2(Call, Auth, match(Args2, Spec), Version, IP)
 	    catch throw:not_found ->
 		    {404, <<"not_found">>};
@@ -444,9 +447,11 @@ handle(Call, Auth, Args, Version, IP) when is_atom(Call), is_list(Args) ->
 
 handle2(Call, Auth, Args, Version, IP) when is_atom(Call), is_list(Args) ->
     ?DEBUG("Args:~p", [Args]),
+%%Args:[{abc,<<"peter">>},{a,<<"123">>}]
     {ArgsF, _ResultF} = ejabberd_commands:get_command_format(Call, Auth, Version),
     ArgsFormatted = format_args(Args, ArgsF),
     ?DEBUG("ArgsF:~p", [ArgsFormatted]),
+%% ArgsF:[<<"peter">>,<<"123">>]
     ejabberd_command(Auth, Call, ArgsFormatted, Version, IP).
 
 get_elem_delete(A, L) ->
@@ -535,7 +540,7 @@ match(Args, Spec) ->
 ejabberd_command(Auth, Cmd, Args, Version, IP) ->
     Access = case Auth of
                  admin -> [];
-                 _ -> undefined
+                 _ -> []%%undefined
              end,
     ?DEBUG("Access:~p Auth:~p, Cmd:~p, Args:~p", [Access, Auth, Cmd, Args]),
     case ejabberd_commands:execute_command(Access, Auth, Cmd, Args, Version, #{ip => IP}) of
