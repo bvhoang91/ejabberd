@@ -300,7 +300,7 @@ process(Calls, #request{method = 'POST', data = Data, ip = {IP, _} = IPPort} = R
     try
         Args = extract_args(Data),
 		Info = convert_api_command(Calls, Req),
-		?DEBUG("Calls:~p, Info:~p", [Calls, Info]),
+		?DEBUG("Req:~p Calls:~p, Info:~p", [Req, Calls, Info]),
 		Call = Info#command_info.name,
         log(Call, Args, IPPort),
         case check_permissions(Req, Call) of
@@ -519,6 +519,8 @@ format_arg(Arg, binary) when is_list(Arg) -> process_unicode_codepoints(Arg);
 format_arg(Arg, binary) when is_binary(Arg) -> Arg;
 format_arg(Arg, string) when is_list(Arg) -> process_unicode_codepoints(Arg);
 format_arg(Arg, string) when is_binary(Arg) -> Arg;
+format_arg(Arg, atom) when is_atom(Arg) -> Arg;
+format_arg(Arg, atom) when is_binary(Arg) -> binary_to_atom(Arg, unicode);
 format_arg(<<"true">>, bool) -> true;
 format_arg(<<"false">>, bool) -> false;
 format_arg(undefined, binary) -> <<>>;

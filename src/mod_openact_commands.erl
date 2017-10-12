@@ -8,7 +8,7 @@
 
 -export([start/2, stop/1, mod_opt_type/1, depends/2]).
 
--export([app_conv_create/3]).
+-export([app_conv_create/4]).
 
 -define(RES_CONV, {tuple, [{id, string}, {url, string}, {messages_url, string},
 						   {created_at, string},
@@ -37,14 +37,20 @@ get_commands_spec() ->
      [#ejabberd_commands{name = app_conv_create, tags = [erlang],
 			desc = "Recompile and reload Erlang source code file",
 			module = ?MODULE, function = app_conv_create,
-			args = [{app_id, binary}, {participants, {list, {name, binary}}},
-					{distinct, bool}, {metadata, {list, {name, binary}}}],
+			args = [{app_id, binary}, 
+				{participants,
+				 {list, {name, binary}}},
+					{distinct, atom},
+				{metadata, {list, {tuple, [{attr, binary}, {value, binary}]}}}],
 			args_example = [],
 			args_desc = [],
 			result = [{v1, {response, ?RES_CONV}},
-					  {v2, {response, {tuple, [{id, string}, {code, string},
-											   {message, string}, {url, string},
-											   {data, ?RES_CONV}]}}],
+				  {v2, {response, 
+					{tuple, [{id, string}, 
+						 {code, string},
+						 {message, string},
+						 {url, string},
+						 {data, ?RES_CONV}]}}}],
 			result_example = ok,
 			policy = open,
 			result_desc = "Status code: 0 on success, 1 otherwise"}].
