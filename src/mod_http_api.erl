@@ -580,6 +580,8 @@ format_command_result(Cmd, Auth, {Code, VerResult, Result}, Version) ->
         {{_, {tuple, _}}, _V} ->
             {_, T} = format_result(Result, ResultFormat),
             {Code, T};
+		{{_, empty}, _} ->
+			{Code, <<>>};
         _ ->
             {Code, {[format_result(Result, ResultFormat)]}}
     end.
@@ -615,6 +617,9 @@ format_result(Tuple, {_Name, {tuple, [{_, atom}, ValFmt]}}) ->
 format_result(Tuple, {Name, {tuple, Def}}) ->
     Els = lists:zip(tuple_to_list(Tuple), Def),
     {jlib:atom_to_binary(Name), {[format_result(El, ElDef) || {El, ElDef} <- Els]}};
+
+format_result(PropList, {Name, proplist}) ->
+	{jlib:atom_to_binary(Name), {PropList}};
 
 format_result(404, {_Name, _}) ->
     "not_found".

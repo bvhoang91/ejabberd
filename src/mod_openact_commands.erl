@@ -8,7 +8,7 @@
 
 -export([start/2, stop/1, mod_opt_type/1, depends/2]).
 
--export([app_conv_create/4]).
+-export([app_conv_create/4, app_conv_retrieve/2]).
 
 -define(RES_CONV, {tuple, [{id, string}, {url, string}, {messages_url, string},
 						   {created_at, string},
@@ -19,9 +19,7 @@
 														   {display_name, string},
 														   {avatar_url, string}]}}}},
 						   {distinct, string},
-						   {metadata, {tuple, [{title, string}, {favorite, string},
-											   {background_color, string},{likes, string},
-											   {likers, {list, {data, string}}}]}}]}).
+						   {metadata, proplist}]}).
 
 start(_Host, _Opts) ->
     ?DEBUG("Hoang --- Start", []),
@@ -34,7 +32,7 @@ depends(_Host, _Opts) ->
     [].
 
 get_commands_spec() ->
-     [#ejabberd_commands{name = app_conv_create, tags = [erlang],
+     [#ejabberd_commands{name = app_conv_create, tags = [conv],
 			desc = "Recompile and reload Erlang source code file",
 			module = ?MODULE, function = app_conv_create,
 			args = [{app_id, binary}, 
@@ -53,7 +51,33 @@ get_commands_spec() ->
 						 {data, ?RES_CONV}]}}}],
 			result_example = ok,
 			policy = open,
-			result_desc = "Status code: 0 on success, 1 otherwise"}].
+			result_desc = "Status code: 0 on success, 1 otherwise"},
+	  #ejabberd_commands{name = app_conv_retrieve, tags = [conv],
+			desc = "Recompile and reload Erlang source code file",
+			module = ?MODULE, function = app_conv_retrieve,
+			args = [{app_id, binary},
+					{convID, binary}],
+			args_example = [],
+			args_desc = [],
+			result = [{v1, {response, empty}},
+					  {v2, {response, ?RES_CONV}}],
+			result_example = ok,
+			policy = open,
+			result_desc = "Status code: 0 on success, 1 otherwise"},
+	  #ejabberd_commands{name = app_conv_makeasread, tags = [conv],
+			desc = "Recompile and reload Erlang source code file",
+			module = ?MODULE, function = app_conv_makeasread,
+			args = [{app_id, binary},
+					{convID, binary}],
+			args_example = [],
+			args_desc = [],
+			result = [{v1, {response, empty}},
+					  {v2, {response, ?RES_CONV}}],
+			result_example = ok,
+			policy = open,
+			result_desc = "Status code: 0 on success, 1 otherwise"}
+					  
+						 ].
 
 app_conv_create(AppID, Participants, Distinct, Metadata) ->
 	Res1 = {<<"id">>, <<"url">>, <<"msg_url">>, <<"time">>, [{<<"idp">>, <<"urlp">>, <<"a">>, <<"b">>, <<"c">>}],
@@ -61,5 +85,11 @@ app_conv_create(AppID, Participants, Distinct, Metadata) ->
 	Res2 = {<<"id">>, <<"code">>, <<"msg">>, "url", Res1},
     ?DEBUG("Hoang AppID:~p Participants:~p, Distinct:~p, Metadata:~p", [AppID, Participants, Distinct, Metadata]),
     {200, v2, Res2}.
+
+app_conv_retrieve(AppID, ConvID) ->
+	Res1 = [],
+	Res2 = Res1 = {<<"id">>, <<"url">>, <<"msg_url">>, <<"time">>, [{<<"idp">>, <<"urlp">>, <<"a">>, <<"b">>, <<"c">>}],
+		    <<"true">>, {<<"title">>, <<"fav">>, <<"color">>, <<"likes">>, [<<"likers">>]}},
+	{200, v2, Res2}.
 
 mod_opt_type(_) -> [].
