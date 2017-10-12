@@ -41,7 +41,7 @@ get_commands_spec() ->
 				{participants,
 				 {list, {name, binary}}},
 					{distinct, atom},
-				{metadata, {list, {tuple, [{attr, binary}, {value, binary}]}}}],
+				{metadata, proplist}],
 			args_example = [],
 			args_desc = [],
 			result = [{v1, {response, ?RES_CONV}},
@@ -60,6 +60,6 @@ app_conv_create(AppID, Participants, Distinct, Metadata) ->
 		    <<"true">>, {<<"title">>, <<"fav">>, <<"color">>, <<"likes">>, [<<"likers">>]}},
 	Res2 = {<<"id">>, <<"code">>, <<"msg">>, "url", Res1},
     ?DEBUG("Hoang AppID:~p Participants:~p, Distinct:~p, Metadata:~p", [AppID, Participants, Distinct, Metadata]),
-    {200, v1, Res1}.
+    {200, v2, Res2}.
 
 mod_opt_type(_) -> [].
