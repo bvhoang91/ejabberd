@@ -68,11 +68,35 @@ get_commands_spec() ->
 			desc = "Recompile and reload Erlang source code file",
 			module = ?MODULE, function = app_conv_makeasread,
 			args = [{app_id, binary},
+					{convID, binary},
+					{position, integer}],
+			args_example = [],
+			args_desc = [],
+			result = [{v1, {response, {tuple, [{position, integer}]}}},
+					  {v2, {response, {tuple, [{id, binary}, {code, integer},
+											   {message, binary}, {url, binary}]}}}],
+			result_example = ok,
+			policy = open,
+			result_desc = "Status code: 0 on success, 1 otherwise"},
+	  #ejabberd_commands{name = app_conv_delete, tags = [conv],
+			desc = "Recompile and reload Erlang source code file",
+			module = ?MODULE, function = app_conv_delete,
+			args = [{app_id, binary},
 					{convID, binary}],
 			args_example = [],
 			args_desc = [],
-			result = [{v1, {response, empty}},
-					  {v2, {response, ?RES_CONV}}],
+			result = [{v1, {response, empty}}],
+			result_example = ok,
+			policy = open,
+			result_desc = "Status code: 0 on success, 1 otherwise"},
+	  #ejabberd_commands{name = app_conv_update, tags = [conv],
+			desc = "Recompile and reload Erlang source code file",
+			module = ?MODULE, function = app_conv_update,
+			args = [{app_id, binary},
+					{convID, binary}],
+			args_example = [],
+			args_desc = [],
+			result = [{v1, {response, empty}}],
 			result_example = ok,
 			policy = open,
 			result_desc = "Status code: 0 on success, 1 otherwise"}
@@ -91,5 +115,12 @@ app_conv_retrieve(AppID, ConvID) ->
 	Res2 = Res1 = {<<"id">>, <<"url">>, <<"msg_url">>, <<"time">>, [{<<"idp">>, <<"urlp">>, <<"a">>, <<"b">>, <<"c">>}],
 		    <<"true">>, {<<"title">>, <<"fav">>, <<"color">>, <<"likes">>, [<<"likers">>]}},
 	{200, v2, Res2}.
+
+app_conv_makeasread(AppID, ConvID, Pos) ->
+	%% Pos = undefine | integer
+	{202, v1, {500}}.
+
+app_conv_delete(AppID, ConvID) ->
+	{204, v1, ok}.
 
 mod_opt_type(_) -> [].

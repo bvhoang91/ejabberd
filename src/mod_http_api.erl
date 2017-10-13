@@ -517,6 +517,7 @@ format_arg(Elements, {list, ElementsDef})
     [format_arg(Element, ElementsDef)
      || Element <- Elements];
 format_arg(Arg, integer) when is_integer(Arg) -> Arg;
+format_arg(<<>>, integer) -> undefine;
 format_arg(Arg, binary) when is_list(Arg) -> process_unicode_codepoints(Arg);
 format_arg(Arg, binary) when is_binary(Arg) -> Arg;
 format_arg(Arg, string) when is_list(Arg) -> process_unicode_codepoints(Arg);
@@ -527,7 +528,8 @@ format_arg(<<"true">>, bool) -> true;
 format_arg(<<"false">>, bool) -> false;
 format_arg(undefined, binary) -> <<>>;
 format_arg(undefined, string) -> <<>>;
-format_arg({Arg}, proplist) when is_list(Arg) -> Arg;    
+format_arg({Arg}, proplist) when is_list(Arg) -> Arg;
+format_arg(Arg, any) -> Arg;
 format_arg(Arg, Format) ->
     ?ERROR_MSG("don't know how to format Arg ~p for format ~p", [Arg, Format]),
     throw({invalid_parameter,
