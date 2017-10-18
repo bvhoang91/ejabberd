@@ -286,6 +286,39 @@ convert_command([<<"exports">>, ExportID],
 		    #request{method = 'DELETE'}) ->
     #command_info{name = app_export_delete,
 		  args_extra = [{exportID, ExportID}]};
+
+convert_command([<<"conversations">>], #request{method = 'GET'}) ->
+    #command_info{name = client_conv_get_all};
+convert_command([<<"conversations">>, ConvID], #request{method = 'GET'}) ->
+    #command_info{name = client_conv_get, args_extra = [{convID, ConvID}]};
+convert_command([<<"conversations">>], #request{method = 'POST'}) ->
+    #command_info{name = client_conv_create};
+convert_command([<<"conversations">>, ConvID], #request{method = 'PATCH'}) ->
+    #command_info{name = client_conv_update, args_extra = [{convID, ConvID}]};
+convert_command([<<"conversations">>, ConID], #request{method = 'DELETE'}) ->
+    #command_info{name = client_conv_delete, args_extra = [{convID, ConvID}]};
+	
+convert_command([<<"conversations">>, ConvID, <<"messages">>], #request{method = 'GET'}) ->
+    #command_info{name = client_msg_get_all, args_extra = [{convID, ConvID}]};
+convert_command([<<"messages">>, MsgID], #request{method = 'GET'}) ->
+    #command_info{name = client_msg_get, args_extra = [{msgID, MsgID}]};
+convert_command([<<"conversations">>, ConvID, <<"messages">>], #request{method = 'POST'}) ->
+    #command_info{name = client_msg_send, args_extra = [{convID, ConvID}]};
+convert_command([<<"messages">>, MsgID], #request{method = 'DELETE'}) ->
+    #command_info{name = client_msg_delete, args_extra = [{msgID, MsgID}]};
+convert_command([<<"messages">>, MsgID, <<"parts">>, PartID], #request{method = 'GET'}) ->
+    #command_info{name = client_msg_get_part, args_extra = [{msgID, MsgID}, {partID, PartID}]};
+convert_command([<<"messages">>, MsgID, <<"parts">>], #request{method = 'GET'}) ->
+    #command_info{name = client_msg_get_all_part, args_extra = [{msgID, MsgID}]};
+convert_command([<<"messages">>, MsgID, <<"parts">>], #request{method = 'POST'}) ->
+    #command_info{name = client_msg_add_part, args_extra = [{msgID, MsgID}]};
+convert_command([<<"messages">>, MsgID, <<"parts">>, PartID], #request{method = 'DELETE'}) ->
+    #command_info{name = client_msg_delete_part, args_extra = [{msgID, MsgID}, {partID, PartID}]};
+convert_command([<<"messages">>, MsgID, <<"parts">>, PartID], #request{method = 'PUT'}) ->
+    #command_info{name = client_msg_update_part, args_extra = [{msgID, MsgID}, {partID, PartID}]};
+convert_command([<<"messages">>, MsgID, <<"parts">>], #request{method = 'PUT'}) ->
+    #command_info{name = client_msg_replace_all_part, args_extra = [{msgID, MsgID}]};
+
 convert_command([Call], _) -> 
     #command_info{name = Call}.
 %%%--------------------------------------------------------------------------%%%
@@ -621,6 +654,8 @@ format_result(Tuple, {Name, {tuple, Def}}) ->
 format_result(PropList, {Name, proplist}) ->
 	{jlib:atom_to_binary(Name), {PropList}};
 
+format_result(_, {_Name, empty}) ->
+    <<"">>;
 format_result(404, {_Name, _}) ->
     "not_found".
 
