@@ -319,6 +319,11 @@ convert_command([<<"messages">>, MsgID, <<"parts">>, PartID], #request{method = 
 convert_command([<<"messages">>, MsgID, <<"parts">>], #request{method = 'PUT'}) ->
     #command_info{name = client_msg_replace_all_part, args_extra = [{msgID, MsgID}]};
 
+convert_command([<<"content">>], #request{method = 'POST'}) ->
+    #command_info{name = client_richmsg_upload]};
+convert_command([<<"content">>, ContentID], #request{method = 'GET'}) ->
+    #command_info{name = client_richmsg_refresh, args_extra = [{contentID, ContentID}]]};
+
 convert_command([Call], _) -> 
     #command_info{name = Call}.
 %%%--------------------------------------------------------------------------%%%
